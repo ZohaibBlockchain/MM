@@ -59,11 +59,11 @@ import { User } from "./Structures";
         total_power: 0,
         total_Time: 0,
         update_Time: 0,
-        ref_Id:req.body.ref_Id,
+        ref_Id: req.body.ref_Id,
       });
 
 
-      
+
       let exits = await NewUser.collection.countDocuments({
         device_Id: req.body.device_Id,
       });
@@ -72,37 +72,34 @@ import { User } from "./Structures";
       let refExits = await NewUser.collection.countDocuments({
         device_Id: req.body.ref_Id,
       });
-      
-      if (exits == 0 && refExits == 1) {
-      try {
-        let result = await NewUser.save();
-       
-       res.status(200).send({ status: "User registered" });
 
-      } catch (error) {
-        if(error.code == 11000)
-        {
-          res.status(400).send({ status: "Already exits ",value: error.keyValue }); 
-        }else{
-          res.status(400).send({status:"Unexpected reason"});
+      if (exits == 0 && refExits == 1) {
+        try {
+          let result = await NewUser.save();
+
+          res.status(200).send({ status: "User registered" });
+
+        } catch (error) {
+          if (error.code == 11000) {
+            res.status(400).send({ status: "Already exits ", value: error.keyValue });
+          } else {
+            res.status(400).send({ status: "Unexpected reason" });
+          }
         }
-      }
-      
-      
-       
+
+
+
 
 
 
       } else {
-        if(exits != 0)
-        {
-        res.status(400).send({ status: "already registered with this Id" });
-        return
+        if (exits != 0) {
+          res.status(400).send({ status: "already registered with this Id" });
+          return
         }
-        if(refExits == 0)
-        {
-        res.status(400).send({ status: "Reference not exits" });
-        return
+        if (refExits == 0) {
+          res.status(400).send({ status: "Reference not exits" });
+          return
         }
       }
     } else {
@@ -113,13 +110,14 @@ import { User } from "./Structures";
 
 
 
-app.post('/login',async (req,res)=>{
+app.post('/login', async (req, res) => {
 
-  const ipAddresses = req.header('x-forwarded-for');
-  console.log(req.socket.remoteAddress);
-  res.send(ipAddresses);
- 
- 
+  const ip = req.socket.remoteAddress;
+  if (ip.substring(0, 7) == "::ffff:") {
+    ip = ip.substring(7)
+  }
+  console.log(ip);
+  res.send(ip);
 })
 
 
@@ -139,7 +137,7 @@ app.post("/assignpower", async (req, res) => {
     if (elapsedseconds >= p.total_Time) {
       p.total_Time = 0;
 
-      refReward = (p.pending_balance/100)*2.5;
+      refReward = (p.pending_balance / 100) * 2.5;
       p.pending_balance -= refReward;
       p.off_chain_balance += p.pending_balance;
       p.pending_balance = 0;
@@ -148,29 +146,30 @@ app.post("/assignpower", async (req, res) => {
       let eachunit = p.pending_balance / p.total_Time;
       let reward = eachunit * elapsedseconds;
       p.pending_balance -= reward;
-      refReward = (reward/100)*2.5;
+      refReward = (reward / 100) * 2.5;
       reward -= refReward;
- 
+
       p.off_chain_balance += reward;
-     
+
       p.total_Time -= elapsedseconds;
     }
   }
 
 
   console.log('xxxx');
-if(refReward != 0)
-{
-  try {
-    let rp = await NewUser.collection.findOne({device_Id: p.ref_Id});
-    rp.off_chain_balance += refReward;
-    let tempUser = await NewUser.collection.findOneAndUpdate({ device_Id: p.ref_Id },{
-      $set: {
-        off_chain_balance: rp.off_chain_balance,}});
-  } catch (error) {
-    console.log(error);
+  if (refReward != 0) {
+    try {
+      let rp = await NewUser.collection.findOne({ device_Id: p.ref_Id });
+      rp.off_chain_balance += refReward;
+      let tempUser = await NewUser.collection.findOneAndUpdate({ device_Id: p.ref_Id }, {
+        $set: {
+          off_chain_balance: rp.off_chain_balance,
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
-}
 
 
 

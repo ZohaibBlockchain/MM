@@ -112,7 +112,7 @@ import { User } from "./Structures";
 
 app.post('/login', async (req, res) => {
 
-  const ip = req.socket.remoteAddress;
+  let ip = req.socket.remoteAddress;
   if (ip.substring(0, 7) == "::ffff:") {
     ip = ip.substring(7)
   }
